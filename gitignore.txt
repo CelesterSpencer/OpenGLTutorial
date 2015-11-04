@@ -3,7 +3,7 @@
 /build
 
 # Clion metadata
-/.idea
+/idea
 
 # CMake
 CMakeCache.txt

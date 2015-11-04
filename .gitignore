@@ -2,8 +2,8 @@
 /bin
 /build
 
-# Clion metadata
-/idea
+# CLion
+/.idea
 
 # CMake
 CMakeCache.txt

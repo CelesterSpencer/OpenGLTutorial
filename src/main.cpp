@@ -10,7 +10,13 @@
 
 // glfw
 #include <GLFW/glfw3.h>
+
+// glm
 #include <glm.hpp>
+#include <gtc/type_ptr.hpp>
+
+// internal includes
+#include "Pipeline.h"
 
 
 // --------------------------------------------------------
@@ -19,6 +25,7 @@
 const char* p__vertexShaderFileName = "shader/shader.vert";
 const char* p__fragmentShaderFileName = "shader/shader.frag";
 GLuint VBO;
+GLuint IBO;
 GLuint gWorldLocation;
 
 
@@ -41,7 +48,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 // --------------------------------------------------------
 // debug
 // --------------------------------------------------------
-
 void printOpenGLInfo() {
     // check opengl version
     const GLubyte* renderer = glGetString(GL_RENDERER);
@@ -55,25 +61,51 @@ void printOpenGLInfo() {
 // --------------------------------------------------------
 // drawing
 // --------------------------------------------------------
-void createGeometry() {
-    // setup geometry
-    glm::vec3 vertices[3];
-    vertices[0] = glm::vec3(-1.0f, -1.0, 0.0f);
-    vertices[1] = glm::vec3(1.0f, -1.0, 0.0f);
-    vertices[2] = glm::vec3(0.0f, 1.0, 0.0f);
+void createVertexBuffer() {
+    glm::vec3 vertices[4];
+    vertices[0] = glm::vec3(-1.0f, -1.0f, 0.0f);
+    vertices[1] = glm::vec3(0.0f, -1.0f, 1.0f);
+    vertices[2] = glm::vec3(1.0f, -1.0f, 0.0f);
+    vertices[3] = glm::vec3(0.0f, 1.0f, 0.0f);
 
-    // setup vertex buffer
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+}
+
+void createIndexBuffer() {
+    unsigned int indices[] = { 0, 3, 1,
+                               1, 3, 2,
+                               2, 3, 0,
+                               0, 1, 2 };
+
+    glGenBuffers(1, &IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 
 void drawGeometry(GLFWwindow* window) {
     // clear everything first
     glClear(GL_COLOR_BUFFER_BIT);
 
+    static float scale = 0.0f;
+    scale += 0.001f;
+
+    // create world matrix
+    Pipeline p;
+    p.scale(sinf(scale * 0.1f), sinf(scale * 0.1f), sinf(scale * 0.1f));
+    p.position(sinf(scale), 0.0f, 0.0f);
+    p.rotation(sinf(scale) * 90.0f, sinf(scale) * 90.0f, sinf(scale) * 90.0f);
+    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, glm::value_ptr(p.getTransformation()));
+
+    // update attribute
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+
     // draw stuff
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
     // swap buffers after new frame is filled successfully
     glfwSwapBuffers(window);
@@ -219,7 +251,8 @@ int main() {
 
             // setup stuff
             glClearColor(0,0,0,0);
-            createGeometry();
+            createVertexBuffer();
+            createIndexBuffer();
             compileShaders();
 
             static float scale = 0.0f;
@@ -230,27 +263,15 @@ int main() {
                 // manipulate geometry per frame
                 scale += 0.001f;
 
-                // create world matrix
-                glm::mat4x4 world;
-                world[0][0] = 1.0f; world[0][1] = 0.0f; world[0][2] = 0.0f; world[0][3] = sinf(scale);
-                world[1][0] = 0.0f; world[1][1] = 1.0f; world[1][2] = 0.0f; world[1][3] = 0.0f;
-                world[2][0] = 0.0f; world[2][1] = 0.0f; world[2][2] = 1.0f; world[2][3] = 0.0f;
-                world[3][0] = 0.0f; world[3][1] = 0.0f; world[3][2] = 0.0f; world[3][3] = 1.0f;
-                glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &world[0][0]);
-
-                // update attribute
-                glEnableVertexAttribArray(0);
-                glBindBuffer(GL_ARRAY_BUFFER, VBO);
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
+                // actually drawing stuff
                 drawGeometry(window);
+
+                // disable vertex attribute when it is not immediately used by the shader
+                glDisableVertexAttribArray(0);
 
                 // let glfw check for key events
                 glfwPollEvents();
             }
-
-            // disable vertex attribute when it is not immediately used by the shader
-            glDisableVertexAttribArray(0);
         }
     }
 

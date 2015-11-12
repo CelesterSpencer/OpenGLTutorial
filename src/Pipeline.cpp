@@ -4,7 +4,7 @@
 
 #include "Pipeline.h"
 
-# define M_PI 3.14159265358979323846
+#define M_PI 3.14159265358979323846
 #define toRadian(x) ((x) * M_PI / 180.0f)
 #define toDegree(x) ((x) * 180.0f / M_PI)
 
@@ -26,6 +26,14 @@ void Pipeline::rotation(float rotateX, float rotateY, float rotateZ) {
     m_rotation.x = rotateX;
     m_rotation.y = rotateY;
     m_rotation.z = rotateZ;
+}
+
+void Pipeline::perspectiveProjection(float fov, float width, float height, float zNear, float zFar) {
+    m_fov = fov;
+    m_width = width;
+    m_height = height;
+    m_zNear = zNear;
+    m_zFar = zFar;
 }
 
 
@@ -69,14 +77,45 @@ void Pipeline::initTranslationTransform(glm::mat4x4 &transform, float x, float y
     transform[3][0] = 0.0f; transform[3][1] = 0.0f; transform[3][2] = 0.0f; transform[3][3] = 1.0f;
 }
 
+void Pipeline::initPerspectiveProjection(glm::mat4x4& m) {
+    float ar = m_width/m_height;
+    float zNear = m_zNear;
+    float zFar = m_zFar;
+    float zRange = zNear - zFar;
+    float tanHalfFOV = tanf(toRadian(m_fov/2.0));
+
+    m[0][0] = 1.0f / (tanHalfFOV * ar);
+    m[0][1] = 0.0f;
+    m[0][2] = 0.0f;
+    m[0][3] = 0.0f;
+
+    m[1][0] = 0.0f;
+    m[1][1] = 1.0f / tanHalfFOV;
+    m[1][2] = 0.0f;
+    m[1][3] = 0.0f;
+
+    m[2][0] = 0.0f;
+    m[2][1] = 0.0f;
+    m[2][2] = (-zNear - zFar) / zRange;
+    m[2][3] = 2.0f * zFar * zNear / zRange;
+
+    m[3][0] = 0.0f;
+    m[3][1] = 0.0f;
+    m[3][2] = 1.0f;
+    m[3][3] = 0.0f;
+}
+
+
+
 
 
 glm::mat4x4 Pipeline::getTransformation() {
-    glm::mat4x4 scaleTransform, rotationTransform, translationTransform;
+    glm::mat4x4 scaleTransform, rotationTransform, translationTransform, perspectiveProjectionTransform;
     initScaleTransform(scaleTransform, m_scale.x, m_scale.y, m_scale.z);
     initRotationTransform(rotationTransform, m_rotation.x, m_rotation.y, m_rotation.z);
     initTranslationTransform(translationTransform, m_position.x, m_position.y, m_position.z);
+    initPerspectiveProjection(perspectiveProjectionTransform);
 
-    m_WTransform = translationTransform * rotationTransform * scaleTransform;
+    m_WTransform = perspectiveProjectionTransform * translationTransform * rotationTransform * scaleTransform;
     return m_WTransform;
 }

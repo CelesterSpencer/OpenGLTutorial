@@ -28,6 +28,9 @@ GLuint VBO;
 GLuint IBO;
 GLuint gWorldLocation;
 
+int WINDOW_WIDTH = 1280;
+int WINDOW_HEIGHT = 720;
+
 
 
 // --------------------------------------------------------
@@ -88,14 +91,15 @@ void drawGeometry(GLFWwindow* window) {
     // clear everything first
     glClear(GL_COLOR_BUFFER_BIT);
 
-    static float scale = 0.0f;
+    static float scale = 1.0f;
     scale += 0.001f;
 
     // create world matrix
     Pipeline p;
     p.scale(sinf(scale * 0.1f), sinf(scale * 0.1f), sinf(scale * 0.1f));
-    p.position(sinf(scale), 0.0f, 0.0f);
+    p.position(0.0f, 0.0f, sinf(scale));
     p.rotation(sinf(scale) * 90.0f, sinf(scale) * 90.0f, sinf(scale) * 90.0f);
+    p.perspectiveProjection(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1.0f, 1000.0f);
     glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, glm::value_ptr(p.getTransformation()));
 
     // update attribute
@@ -236,7 +240,7 @@ int main() {
     glfwSetErrorCallback(errorCallback);
 
     // create glfw window
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "OpenGLTutorial", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "OpenGLTutorial", NULL, NULL);
     if (window) {
         glfwMakeContextCurrent(window);
         glfwSetKeyCallback(window, keyCallback);

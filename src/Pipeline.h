@@ -8,9 +8,15 @@
 
 
 // includes
-#include <glm.hpp>
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
+#include <iostream>
+#include <glm.hpp>
+#include <gtx/transform.hpp>
+
+#include "Util.h"
+
+
 
 
 class Pipeline {
@@ -20,18 +26,24 @@ public:
     void position(float x, float y, float z);
     void rotation(float rotateX, float rotateY, float rotateZ);
     void perspectiveProjection(float fov, float width, float height, float zNear, float zFar);
+    void setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
     glm::mat4x4 getTransformation();
 
 private:
     glm::vec3 m_scale;
     glm::vec3 m_position;
     glm::vec3 m_rotation;
-    glm::vec4 m_transformation;
     float m_width;
     float m_height;
     float m_zNear;
     float m_zFar;
     float m_fov;
+
+    struct {
+        glm::vec3 pos;
+        glm::vec3 target;
+        glm::vec3 up;
+    } m_camera;
 
     glm::mat4x4 m_WTransform;
 
@@ -39,6 +51,9 @@ private:
     void initRotationTransform(glm::mat4x4 &transform, float rotateX, float rotateY, float rotateZ);
     void initTranslationTransform(glm::mat4x4 &transform, float x, float y, float z);
     void initPerspectiveProjection(glm::mat4x4& m);
+    void initOrthographicProjection(glm::mat4x4& m);
+    void initCameraTransform(glm::mat4x4& transform, const glm::vec3& target, const glm::vec3& up);
+
 };
 
 

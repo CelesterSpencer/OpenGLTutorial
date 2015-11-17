@@ -17,6 +17,8 @@
 
 // internal includes
 #include "Pipeline.h"
+#include "Camera.h"
+#include "TrackballCamera.h"
 
 
 // --------------------------------------------------------
@@ -27,9 +29,10 @@ const char* p__fragmentShaderFileName = "shader/shader.frag";
 GLuint VBO;
 GLuint IBO;
 GLuint gWorldLocation;
+cgf::Camera* m_camera;
 
-int WINDOW_WIDTH = 1280;
-int WINDOW_HEIGHT = 720;
+int WINDOW_WIDTH = 1024;
+int WINDOW_HEIGHT = 768;
 
 
 
@@ -43,7 +46,13 @@ void errorCallback(int error, const char* description) {
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
+    } else {
+        m_camera->onKeyboard(key);
     }
+}
+
+void cursorCallback(GLFWwindow* window, double xPos, double yPos) {
+    m_camera->onMouse(xPos, yPos);
 }
 
 
@@ -66,10 +75,12 @@ void printOpenGLInfo() {
 // --------------------------------------------------------
 void createVertexBuffer() {
     glm::vec3 vertices[4];
-    vertices[0] = glm::vec3(-1.0f, -1.0f, 0.0f);
-    vertices[1] = glm::vec3(0.0f, -1.0f, 1.0f);
-    vertices[2] = glm::vec3(1.0f, -1.0f, 0.0f);
-    vertices[3] = glm::vec3(0.0f, 1.0f, 0.0f);
+    vertices[0] = glm::vec3(-1.0f, -1.0f, -1.0f);
+    vertices[1] = glm::vec3(1.0f, -1.0f, -1.0f);
+    vertices[2] = glm::vec3(1.0f, -1.0f, 1.0f);
+    vertices[3] = glm::vec3(-1.0f, -1.0f, 1.0f);
+    vertices[4] = glm::vec3(0.0f, 1.0f, 0.0f);
+
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -77,10 +88,12 @@ void createVertexBuffer() {
 }
 
 void createIndexBuffer() {
-    unsigned int indices[] = { 0, 3, 1,
-                               1, 3, 2,
-                               2, 3, 0,
-                               0, 1, 2 };
+    unsigned int indices[] = { 0, 4, 1,
+                               4, 2, 1,
+                               4, 3, 2,
+                               4, 0, 3,
+                               0, 1, 2,
+                               0, 2, 3 };
 
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
@@ -91,16 +104,18 @@ void drawGeometry(GLFWwindow* window) {
     // clear everything first
     glClear(GL_COLOR_BUFFER_BIT);
 
-    static float scale = 1.0f;
-    scale += 0.001f;
+    static float scale = 0.0f;
+    scale += 0.01f;
 
     // create world matrix
     Pipeline p;
-    p.scale(sinf(scale * 0.1f), sinf(scale * 0.1f), sinf(scale * 0.1f));
-    p.position(0.0f, 0.0f, sinf(scale));
-    p.rotation(sinf(scale) * 90.0f, sinf(scale) * 90.0f, sinf(scale) * 90.0f);
-    p.perspectiveProjection(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1.0f, 1000.0f);
-    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, glm::value_ptr(p.getTransformation()));
+    p.scale(.2, .2, .2);
+    p.position(.0f, 0.0f, 0.0f);
+    p.rotation(0.0f, scale, 0.0f);
+    p.perspectiveProjection(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 0.1f, 100.0f);
+    m_camera->update();
+    p.setCamera(m_camera->getPosition(), m_camera->getTarget(), m_camera->getUp());
+    glUniformMatrix4fv(gWorldLocation, 1, GL_FALSE, value_ptr(p.getTransformation()));
 
     // update attribute
     glEnableVertexAttribArray(0);
@@ -110,6 +125,8 @@ void drawGeometry(GLFWwindow* window) {
 
     // draw stuff
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+
+    glDisableVertexAttribArray(0);
 
     // swap buffers after new frame is filled successfully
     glfwSwapBuffers(window);
@@ -244,6 +261,7 @@ int main() {
     if (window) {
         glfwMakeContextCurrent(window);
         glfwSetKeyCallback(window, keyCallback);
+        glfwSetCursorPosCallback(window, cursorCallback);
 
         // initialize glew in order being able to use the opengl features
         glewExperimental = GL_TRUE;
@@ -259,19 +277,16 @@ int main() {
             createIndexBuffer();
             compileShaders();
 
-            static float scale = 0.0f;
+            // set initial camera parameters
+            glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
+            cgf::TrackballCamera camera = cgf::TrackballCamera(window, WINDOW_WIDTH, WINDOW_HEIGHT, 10, cameraTarget);
+            m_camera = &camera;
 
             // run until user closes the window or presses ALT+F4
             while (!glfwWindowShouldClose(window)) {
 
-                // manipulate geometry per frame
-                scale += 0.001f;
-
                 // actually drawing stuff
                 drawGeometry(window);
-
-                // disable vertex attribute when it is not immediately used by the shader
-                glDisableVertexAttribArray(0);
 
                 // let glfw check for key events
                 glfwPollEvents();

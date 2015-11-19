@@ -15,6 +15,10 @@
 #include <glm.hpp>
 #include <gtc/type_ptr.hpp>
 
+// imgui
+#include <imgui.h>
+#include "imgui_impl_glfw_gl3.h"
+
 // internal includes
 #include "Pipeline.h"
 #include "Camera.h"
@@ -55,6 +59,9 @@ void cursorCallback(GLFWwindow* window, double xPos, double yPos) {
     m_camera->onMouse(xPos, yPos);
 }
 
+void mouseWheelCallback(GLFWwindow* window, double xOffset, double yOffset) {
+    m_camera->onMouseScroll(xOffset, yOffset);
+}
 
 
 // --------------------------------------------------------
@@ -66,6 +73,18 @@ void printOpenGLInfo() {
     const GLubyte* version = glGetString(GL_VERSION);
     printf("Renderer: %s\n", renderer);
     printf("OpenGL version: %s\n", version);
+}
+
+
+
+// --------------------------------------------------------
+// gui
+// --------------------------------------------------------
+void showGUI() {
+    ImGui::Text("Hello World");
+    if (ImGui::Button("Please press me!")) {
+
+    }
 }
 
 
@@ -122,6 +141,9 @@ void drawGeometry(GLFWwindow* window) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+
+    // draw gui
+    showGUI();
 
     // draw stuff
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
@@ -259,9 +281,12 @@ int main() {
     // create glfw window
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "OpenGLTutorial", NULL, NULL);
     if (window) {
+
+        // set glfw context and relevant callbacks
         glfwMakeContextCurrent(window);
         glfwSetKeyCallback(window, keyCallback);
         glfwSetCursorPosCallback(window, cursorCallback);
+        glfwSetScrollCallback(window, mouseWheelCallback);
 
         // initialize glew in order being able to use the opengl features
         glewExperimental = GL_TRUE;

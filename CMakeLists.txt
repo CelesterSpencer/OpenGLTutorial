@@ -10,12 +10,14 @@ find_package(GLEW REQUIRED)
 #find_package(ASSIMP REQUIRED)
 find_package(GLFW3 REQUIRED)
 find_package(GLM REQUIRED)
+find_package(IMGUI REQUIRED)
 
 include_directories(
 ${GLEW_INCLUDE_PATH}
 #${ASSIMP_INCLUDE_DIR}
 ${GLFW3_INCLUDE_PATH}
 ${GLM_INCLUDE_PATH}
+${IMGUI_INCLUDE_PATH}
 )
 set(DLLS
         ${GLEW_DLL}

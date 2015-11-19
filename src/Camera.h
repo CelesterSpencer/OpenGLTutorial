@@ -13,6 +13,7 @@ namespace cgf {
     public:
         virtual bool onKeyboard(int key) =0;
         virtual bool onMouse(int x, int y) =0;
+        virtual bool onMouseScroll(double xOffset, double yOffset) =0;
         virtual void update() =0;
 
         glm::vec3 getPosition() { return m_position; };

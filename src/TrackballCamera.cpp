@@ -41,18 +41,25 @@ bool cgf::TrackballCamera::onKeyboard(int key) {
 }
 
 bool cgf::TrackballCamera::onMouse(int x, int y) {
-    float dPhi = 2 * M_PI * (m_oldPosition.y - y) / m_windowHeight;
-    float dTheta = M_PI * (m_oldPosition.x - x) / m_windowWidth;
+    float dTheta = (m_oldPosition.x - x) / 2;
+    float dPhi = (m_oldPosition.y - y) / 2;
     rotate(-dTheta, dPhi);
     m_oldPosition.x = x;
     m_oldPosition.y = y;
 }
 
+bool cgf::TrackballCamera::onMouseScroll(double xOffset, double yOffset) {
+    zoom(yOffset);
+}
+
 void cgf::TrackballCamera::update() {
 
-    m_position.x = m_radius * sinf(m_theta) * cosf(m_phi);
-    m_position.y = m_radius * cosf(m_theta);
-    m_position.z = m_radius * sinf(m_theta) * sinf(m_phi);
+    float theta = glm::radians(m_theta);
+    float phi = glm::radians(m_phi);
+
+    m_position.x = m_radius * glm::sin(phi) * glm::sin(theta);
+    m_position.y = m_radius * glm::cos(phi);
+    m_position.z = m_radius * glm::sin(phi) * glm::cos(theta);
 
     glm::vec3 look = glm::normalize(m_position - m_target);
     glm::vec3 worldUp(0.0f, 1.0f, 0.0f);

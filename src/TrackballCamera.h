@@ -5,6 +5,7 @@
 #ifndef SRCCMAKE_TRACKBALLCAMERA_H
 #define SRCCMAKE_TRACKBALLCAMERA_H
 
+#define GLM_FORCE_RADIANS
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
@@ -20,9 +21,10 @@ namespace cgf {
         TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight);
         TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight, float radius, glm::vec3 target);
 
-        bool onKeyboard(int key);
-        bool onMouse(int x, int y);
-        void update();
+        virtual bool onKeyboard(int key);
+        virtual bool onMouse(int x, int y);
+        virtual bool onMouseScroll(double xOffset, double yOffset);
+        virtual void update();
 
     private:
         float m_radius;

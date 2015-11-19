@@ -44,27 +44,24 @@ void Pipeline::initScaleTransform(glm::mat4x4 &transform, float scaleX, float sc
 void Pipeline::initRotationTransform(glm::mat4x4 &transform, float rotateX, float rotateY, float rotateZ)  {
     glm::mat4x4 rx, ry, rz;
 
-    /*const float x = glm::radians(rotateX);
+    const float x = glm::radians(rotateX);
     const float y = glm::radians(rotateY);
-    const float z = glm::radians(rotateZ);*/
-    const float x = rotateX;
-    const float y = rotateY;
-    const float z = rotateZ;
+    const float z = glm::radians(rotateZ);
 
-    rx[0][0] = 1.0f; rx[1][0] = 0.0f   ; rx[2][0] = 0.0f    ; rx[3][0] = 0.0f;
-    rx[0][1] = 0.0f; rx[1][1] = cosf(x); rx[2][1] = -sinf(x); rx[3][1] = 0.0f;
-    rx[0][2] = 0.0f; rx[1][2] = sinf(x); rx[2][2] = cosf(x) ; rx[3][2] = 0.0f;
-    rx[0][3] = 0.0f; rx[1][3] = 0.0f   ; rx[2][3] = 0.0f    ; rx[3][3] = 1.0f;
+    rx[0][0] = 1.0f; rx[1][0] = 0.0f       ; rx[2][0] = 0.0f        ; rx[3][0] = 0.0f;
+    rx[0][1] = 0.0f; rx[1][1] = glm::cos(x); rx[2][1] = -glm::sin(x); rx[3][1] = 0.0f;
+    rx[0][2] = 0.0f; rx[1][2] = glm::sin(x); rx[2][2] = glm::cos(x) ; rx[3][2] = 0.0f;
+    rx[0][3] = 0.0f; rx[1][3] = 0.0f       ; rx[2][3] = 0.0f        ; rx[3][3] = 1.0f;
 
-    ry[0][0] = cosf(y); ry[1][0] = 0.0f; ry[2][0] = sinf(y);  ry[3][0] = 0.0f;
-    ry[0][1] = 0.0f   ; ry[1][1] = 1.0f; ry[2][1] = 0.0f    ; ry[3][1] = 0.0f;
-    ry[0][2] = -sinf(y);ry[1][2] = 0.0f; ry[2][2] = cosf(y) ; ry[3][2] = 0.0f;
-    ry[0][3] = 0.0f   ; ry[1][3] = 0.0f; ry[2][3] = 0.0f    ; ry[3][3] = 1.0f;
+    ry[0][0] = glm::cos(y) ; ry[1][0] = 0.0f; ry[2][0] = glm::sin(y) ; ry[3][0] = 0.0f;
+    ry[0][1] = 0.0f        ; ry[1][1] = 1.0f; ry[2][1] = 0.0f        ; ry[3][1] = 0.0f;
+    ry[0][2] = -glm::sin(y); ry[1][2] = 0.0f; ry[2][2] = glm::cos(y) ; ry[3][2] = 0.0f;
+    ry[0][3] = 0.0f        ; ry[1][3] = 0.0f; ry[2][3] = 0.0f        ; ry[3][3] = 1.0f;
 
-    rz[0][0] = cosf(z); rz[1][0] = -sinf(z); rz[2][0] = 0.0f; rz[3][0] = 0.0f;
-    rz[0][1] = sinf(z); rz[1][1] = cosf(z) ; rz[2][1] = 0.0f; rz[3][1] = 0.0f;
-    rz[0][2] = 0.0f   ; rz[1][2] = 0.0f    ; rz[2][2] = 1.0f; rz[3][2] = 0.0f;
-    rz[0][3] = 0.0f   ; rz[1][3] = 0.0f    ; rz[2][3] = 0.0f; rz[3][3] = 1.0f;
+    rz[0][0] = glm::cos(z); rz[1][0] = -glm::sin(z); rz[2][0] = 0.0f; rz[3][0] = 0.0f;
+    rz[0][1] = glm::sin(z); rz[1][1] = glm::cos(z) ; rz[2][1] = 0.0f; rz[3][1] = 0.0f;
+    rz[0][2] = 0.0f       ; rz[1][2] = 0.0f        ; rz[2][2] = 1.0f; rz[3][2] = 0.0f;
+    rz[0][3] = 0.0f       ; rz[1][3] = 0.0f        ; rz[2][3] = 0.0f; rz[3][3] = 1.0f;
 
     transform = rz * ry * rx;
 }
@@ -106,20 +103,21 @@ void Pipeline::setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 up) {
     m_camera.up = up;
 }
 
-void Pipeline::initCameraTransform(glm::mat4x4& transform, const glm::vec3& target, const glm::vec3& up) {
+void Pipeline::initCameraTransform(glm::mat4x4& transform, const glm::vec3& view, const glm::vec3& up) {
 
-    glm::vec3 n = target;
-    n = glm::normalize(n);
+    glm::vec3 z = view;
+    z = glm::normalize(z);
 
-    glm::vec3 u = up;
-    u = glm::normalize(u);
-    u = glm::cross(u, target);
+    glm::vec3 y = up;
+    y = glm::normalize(y);
+    glm::vec3 x = glm::cross(y, z);
+    x = glm::normalize(x);
 
-    glm::vec3 v = glm::cross(n, u);
+    y = glm::cross(z, x);
 
-    transform[0][0] = u.x; transform[1][0] = u.y; transform[2][0] = u.z; transform[3][0] = 0.0f;
-    transform[0][1] = v.x; transform[1][1] = v.y; transform[2][1] = v.z; transform[3][1] = 0.0f;
-    transform[0][2] = n.x; transform[1][2] = n.y; transform[2][2] = n.z; transform[3][2] = 0.0f;
+    transform[0][0] = x.x; transform[1][0] = x.y; transform[2][0] = x.z; transform[3][0] = 0.0f;
+    transform[0][1] = y.x; transform[1][1] = y.y; transform[2][1] = y.z; transform[3][1] = 0.0f;
+    transform[0][2] = z.x; transform[1][2] = z.y; transform[2][2] = z.z; transform[3][2] = 0.0f;
     transform[0][3] = 0.0f;transform[1][3] = 0.0f;transform[2][3] = 0.0f;transform[3][3] = 1.0f;
 
 }
@@ -145,7 +143,7 @@ glm::mat4x4 Pipeline::getTransformation() {
     initTranslationTransform(cameraTrans, -m_camera.pos.x, -m_camera.pos.y, -m_camera.pos.z);
     initCameraTransform(cameraRot, m_camera.pos - m_camera.target, m_camera.up);
     initPerspectiveProjection(persProj);
-    persProj = glm::perspective(m_fov, m_width/ m_height, m_zNear, m_zFar);
+    persProj = glm::perspective(glm::radians(m_fov), m_width/ m_height, m_zNear, m_zFar);
 
     m_WTransform = persProj * cameraRot * cameraTrans *  translate * rotate * scale;
 

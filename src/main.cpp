@@ -5,8 +5,7 @@
 #include <string>
 
 // glew, include it before gl.h and glfw.h
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include <GL/gl3w.h>
 
 // glfw
 #include <GLFW/glfw3.h>
@@ -48,6 +47,7 @@ void errorCallback(int error, const char* description) {
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    std::cout << "bladrian"<<std::endl;
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     } else {
@@ -69,10 +69,8 @@ void mouseWheelCallback(GLFWwindow* window, double xOffset, double yOffset) {
 // --------------------------------------------------------
 void printOpenGLInfo() {
     // check opengl version
-    const GLubyte* renderer = glGetString(GL_RENDERER);
-    const GLubyte* version = glGetString(GL_VERSION);
-    printf("Renderer: %s\n", renderer);
-    printf("OpenGL version: %s\n", version);
+    printf("Renderer: %s\n", glGetString(GL_RENDERER));
+    printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
 
@@ -81,9 +79,16 @@ void printOpenGLInfo() {
 // gui
 // --------------------------------------------------------
 void showGUI() {
-    ImGui::Text("Hello World");
-    if (ImGui::Button("Please press me!")) {
-
+    {
+        ImVec4 clear_color = ImColor(1, 1, 1);
+        static float f = 0.0f;
+        ImGui::Text("Hello, world!");
+        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+        ImGui::ColorEdit3("clear color", (float*)&clear_color);
+        if (ImGui::Button("Test Window")) {
+            std::cout << "Button was pressed" << std::endl;
+        }
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     }
 }
 
@@ -143,15 +148,12 @@ void drawGeometry(GLFWwindow* window) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 
     // draw gui
-    showGUI();
+    //showGUI();
 
     // draw stuff
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
     glDisableVertexAttribArray(0);
-
-    // swap buffers after new frame is filled successfully
-    glfwSwapBuffers(window);
 }
 
 
@@ -288,10 +290,13 @@ int main() {
         glfwSetCursorPosCallback(window, cursorCallback);
         glfwSetScrollCallback(window, mouseWheelCallback);
 
-        // initialize glew in order being able to use the opengl features
-        glewExperimental = GL_TRUE;
-        GLenum res = glewInit();
-        if (res == GLEW_OK) {
+        // initialize gl3w in order being able to use the opengl features
+        if (!gl3wInit()) {
+
+            if (!gl3wIsSupported(3,2)) {
+                std::cout << "OpenGL 3.2 not supported" << std::endl;
+                return -1;
+            }
 
             // print opengl version and shader version
             printOpenGLInfo();
@@ -307,19 +312,34 @@ int main() {
             cgf::TrackballCamera camera = cgf::TrackballCamera(window, WINDOW_WIDTH, WINDOW_HEIGHT, 10, cameraTarget);
             m_camera = &camera;
 
+            // Setup ImGui binding
+            ImGui_ImplGlfwGL3_Init(window, false);
+
             // run until user closes the window or presses ALT+F4
             while (!glfwWindowShouldClose(window)) {
+
+                // let glfw check for key events
+                glfwPollEvents();
+                
+                // display GUI
+                ImGui_ImplGlfwGL3_NewFrame();
+                showGUI();
 
                 // actually drawing stuff
                 drawGeometry(window);
 
-                // let glfw check for key events
-                glfwPollEvents();
+                // render gui
+                ImGui::Render();
+
+                // swap buffers after new frame is filled successfully
+                glfwSwapBuffers(window);
+
             }
         }
     }
 
     // terminate glfw window
+    ImGui_ImplGlfwGL3_Shutdown();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

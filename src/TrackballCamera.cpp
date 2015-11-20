@@ -75,7 +75,6 @@ void cgf::TrackballCamera::update() {
 void cgf::TrackballCamera::rotate(float dTheta, float dPhi) {
     m_theta += dTheta;
     m_phi += dPhi;
-    std::cout << "rotate to " << m_theta << ", " << m_phi << std::endl;
 }
 
 void cgf::TrackballCamera::zoom(float distance) {

@@ -22,6 +22,7 @@
 #include "Pipeline.h"
 #include "Camera.h"
 #include "TrackballCamera.h"
+#include "Texture.h"
 
 
 // --------------------------------------------------------
@@ -32,10 +33,25 @@ const char* p__fragmentShaderFileName = "shader/shader.frag";
 GLuint VBO;
 GLuint IBO;
 GLuint gWorldLocation;
+GLuint gSampler;
+cgf::Texture* pTexture = NULL;
 cgf::Camera* m_camera;
 
 int WINDOW_WIDTH = 1024;
 int WINDOW_HEIGHT = 768;
+
+struct Vertex {
+    glm::vec3 m_pos;
+    glm::vec2 m_tex;
+
+    Vertex() {}
+
+    Vertex(glm::vec3 pos, glm::vec2 tex)
+    {
+        m_pos = pos;
+        m_tex = tex;
+    }
+};
 
 
 
@@ -47,7 +63,6 @@ void errorCallback(int error, const char* description) {
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    std::cout << "bladrian"<<std::endl;
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     } else {
@@ -98,12 +113,10 @@ void showGUI() {
 // drawing
 // --------------------------------------------------------
 void createVertexBuffer() {
-    glm::vec3 vertices[4];
-    vertices[0] = glm::vec3(-1.0f, -1.0f, -1.0f);
-    vertices[1] = glm::vec3(1.0f, -1.0f, -1.0f);
-    vertices[2] = glm::vec3(1.0f, -1.0f, 1.0f);
-    vertices[3] = glm::vec3(-1.0f, -1.0f, 1.0f);
-    vertices[4] = glm::vec3(0.0f, 1.0f, 0.0f);
+    Vertex vertices[4] = { Vertex(glm::vec3(-1.0f, -1.0f, 0.5773f),  glm::vec2(0.0f, 0.0f)),
+                           Vertex(glm::vec3(0.0f, -1.0f, -1.15475f), glm::vec2(0.5f, 0.0f)),
+                           Vertex(glm::vec3(1.0f, -1.0f, 0.5773f),   glm::vec2(1.0f, 0.0f)),
+                           Vertex(glm::vec3(0.0f, 1.0f, 0.0f),       glm::vec2(0.5f, 1.0f)) };
 
 
     glGenBuffers(1, &VBO);
@@ -112,12 +125,10 @@ void createVertexBuffer() {
 }
 
 void createIndexBuffer() {
-    unsigned int indices[] = { 0, 4, 1,
-                               4, 2, 1,
-                               4, 3, 2,
-                               4, 0, 3,
-                               0, 1, 2,
-                               0, 2, 3 };
+    unsigned int indices[] = { 0, 3, 1,
+                               1, 3, 2,
+                               2, 3, 0,
+                               0, 1, 2 };
 
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
@@ -143,17 +154,19 @@ void drawGeometry(GLFWwindow* window) {
 
     // update attribute
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-
-    // draw gui
-    //showGUI();
+    pTexture->bind(GL_TEXTURE0);
 
     // draw stuff
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
+    // disable attributes after they have been used
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 }
 
 
@@ -303,16 +316,26 @@ int main() {
 
             // setup stuff
             glClearColor(0,0,0,0);
+            glFrontFace(GL_CW);
+            glCullFace(GL_BACK);
+            glEnable(GL_CULL_FACE);
             createVertexBuffer();
             createIndexBuffer();
             compileShaders();
+
+            // set sampler and load texture
+            glUniform1i(gSampler, 0);
+            pTexture = new cgf::Texture(GL_TEXTURE_2D, "textures/test.png");
+            if (!pTexture->load()) {
+                return 1;
+            }
 
             // set initial camera parameters
             glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
             cgf::TrackballCamera camera = cgf::TrackballCamera(window, WINDOW_WIDTH, WINDOW_HEIGHT, 10, cameraTarget);
             m_camera = &camera;
 
-            // Setup ImGui binding
+            // setup ImGui binding
             ImGui_ImplGlfwGL3_Init(window, false);
 
             // run until user closes the window or presses ALT+F4
@@ -320,7 +343,7 @@ int main() {
 
                 // let glfw check for key events
                 glfwPollEvents();
-                
+
                 // display GUI
                 ImGui_ImplGlfwGL3_NewFrame();
                 showGUI();
@@ -338,8 +361,9 @@ int main() {
         }
     }
 
-    // terminate glfw window
+    // shutdown imgui
     ImGui_ImplGlfwGL3_Shutdown();
+    // terminate glfw window
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

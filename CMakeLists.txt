@@ -15,15 +15,19 @@ include_directories(
         ${GLM_INCLUDE_PATH}
         ${EXTERNAL_DIR}/gl3w/include
         ${EXTERNAL_DIR}/imgui
+        ${EXTERNAL_DIR}/stb
 )
+
+# copy dlls
 set(DLLS
         ${GLFW3_DLL}
         #${ASSIMP_DLL}
 )
 file(COPY ${DLLS} DESTINATION /)
 
+# copy other files
 file(COPY shader DESTINATION /)
-#file(COPY textures DESTINATION /)
+file(COPY textures DESTINATION /)
 #file(COPY model DESTINATION /)
 
 # add source files
@@ -36,6 +40,12 @@ file(GLOB_RECURSE GL3W
         "${EXTERNAL_DIR}/gl3w/src/*.c"
 )
 
+# add stb_image
+file(GLOB_RECURSE STB
+        "${EXTERNAL_DIR}/stb/*.h"
+        "${EXTERNAL_DIR}/stb/*.c"
+)
+
 # add imgui
 file(GLOB_RECURSE IMGUI
         "${EXTERNAL_DIR}/imgui/*.h"
@@ -45,6 +55,7 @@ file(GLOB_RECURSE IMGUI
 add_executable(OpenGLTutorial
         ${SOURCE_FILES}
         ${GL3W}
+        ${STB}
         ${IMGUI}
 )
 

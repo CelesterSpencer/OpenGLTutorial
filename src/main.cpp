@@ -29,16 +29,19 @@
 // global variables
 // --------------------------------------------------------
 const char* p__vertexShaderFileName = "shader/shader.vert";
-const char* p__fragmentShaderFileName = "shader/shader.frag";
+const char* p__fragmentShaderFileName = "shader/lighting.frag";
+GLuint shaderProgramLocation;
 GLuint VBO;
 GLuint IBO;
 GLuint gWorldLocation;
 GLuint gSampler;
+GLuint gDirLightColorLocation;
+GLuint gDirLightAmbientIntensityLocation;
 cgf::Texture* pTexture = NULL;
 cgf::Camera* m_camera;
 
-int WINDOW_WIDTH = 1024;
-int WINDOW_HEIGHT = 768;
+float WINDOW_WIDTH = 1024;
+float WINDOW_HEIGHT = 768;
 
 struct Vertex {
     glm::vec3 m_pos;
@@ -52,6 +55,11 @@ struct Vertex {
         m_tex = tex;
     }
 };
+
+struct DirectionalLight {
+    glm::vec3 color;
+    float ambientIntensity;
+} m_directionalLight;
 
 
 
@@ -79,6 +87,7 @@ void mouseWheelCallback(GLFWwindow* window, double xOffset, double yOffset) {
 }
 
 
+
 // --------------------------------------------------------
 // debug
 // --------------------------------------------------------
@@ -95,16 +104,46 @@ void printOpenGLInfo() {
 // --------------------------------------------------------
 void showGUI() {
     {
-        ImVec4 clear_color = ImColor(1, 1, 1);
-        static float f = 0.0f;
+        static float r = 1.0f;
+        static float g = 1.0f;
+        static float b = 1.0f;
+        static float a = 0.5f;
         ImGui::Text("Hello, world!");
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", (float*)&clear_color);
-        if (ImGui::Button("Test Window")) {
-            std::cout << "Button was pressed" << std::endl;
-        }
+        ImGui::SliderFloat("r", &r, 0.0f, 1.0f);
+        ImGui::SliderFloat("g", &g, 0.0f, 1.0f);
+        ImGui::SliderFloat("b", &b, 0.0f, 1.0f);
+        ImGui::SliderFloat("alpha", &a, 0.0f, 1.0f);
+        m_directionalLight.color.x = r;
+        m_directionalLight.color.y = g;
+        m_directionalLight.color.z = b;
+        m_directionalLight.ambientIntensity = a;
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     }
+}
+
+
+
+// --------------------------------------------------------
+// setup lighting
+// --------------------------------------------------------
+void setupLighting() {
+    m_directionalLight.color = glm::vec3(1.0f,1.0f,1.0f);
+    m_directionalLight.ambientIntensity = 0.5f;
+    std::cout << "shader program location is " << shaderProgramLocation << std::endl;
+    gDirLightColorLocation = glGetUniformLocation(shaderProgramLocation, "gDirectionalLight.color");
+    gDirLightAmbientIntensityLocation = glGetUniformLocation(shaderProgramLocation, "gDirectionalLight.ambientIntensity");
+
+    if (gDirLightColorLocation == 0xffffffff) {
+        fprintf(stderr, "Warning! Unable to get the location light color\n");
+    }
+    if (gDirLightAmbientIntensityLocation == 0xffffffff) {
+        fprintf(stderr, "Warning! Unable to get the location light ambient\n");
+    }
+}
+
+void setLighting(DirectionalLight& Light) {
+    glUniform3f(gDirLightColorLocation, Light.color.x, Light.color.y, Light.color.z);
+    glUniform1f(gDirLightAmbientIntensityLocation, Light.ambientIntensity);
 }
 
 
@@ -151,6 +190,7 @@ void drawGeometry(GLFWwindow* window) {
     m_camera->update();
     p.setCamera(m_camera->getPosition(), m_camera->getTarget(), m_camera->getUp());
     glUniformMatrix4fv(gWorldLocation, 1, GL_FALSE, value_ptr(p.getTransformation()));
+    setLighting(m_directionalLight);
 
     // update attribute
     glEnableVertexAttribArray(0);
@@ -228,6 +268,7 @@ void addShader(GLuint shaderProgram, const char* p__shaderText, GLenum shaderTyp
 void compileShaders() {
     // setup shader program
     GLuint shaderProgram = glCreateProgram();
+    shaderProgramLocation = shaderProgram;
     if(shaderProgram == 0) {
         fprintf(stderr, "Error creating shader program\n");
         exit(1);
@@ -322,6 +363,9 @@ int main() {
             createVertexBuffer();
             createIndexBuffer();
             compileShaders();
+
+            // setup light
+            setupLighting();
 
             // set sampler and load texture
             glUniform1i(gSampler, 0);

@@ -10,7 +10,7 @@
 #include <cmath>
 #include <iostream>
 #include <gtx/rotate_vector.hpp>
-#include <glfw/glfw3.h>
+#include <gtc/constants.hpp>
 #include "Camera.h"
 
 
@@ -24,6 +24,7 @@ namespace cgf {
         virtual bool onKeyboard(int key);
         virtual bool onMouse(int x, int y);
         virtual bool onMouseScroll(double xOffset, double yOffset);
+        virtual bool onMouseButton(int button, int action);
         virtual void update();
 
     private:
@@ -31,6 +32,8 @@ namespace cgf {
         float m_theta;
         float m_phi;
         glm::vec2 m_oldPosition;
+        bool m_positionReseted = true;
+        bool m_mouseButtonPressed = false;
 
         void rotate(float dTheta, float dPhi);
         void zoom(float distance);

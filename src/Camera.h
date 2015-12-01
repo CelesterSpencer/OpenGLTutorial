@@ -6,6 +6,7 @@
 #define SRCCMAKE_CAMERA_H
 
 #include <glm.hpp>
+#include <glfw/glfw3.h>
 
 
 namespace cgf {
@@ -14,6 +15,7 @@ namespace cgf {
         virtual bool onKeyboard(int key) =0;
         virtual bool onMouse(int x, int y) =0;
         virtual bool onMouseScroll(double xOffset, double yOffset) =0;
+        virtual bool onMouseButton(int button, int action) =0;
         virtual void update() =0;
 
         glm::vec3 getPosition() { return m_position; };

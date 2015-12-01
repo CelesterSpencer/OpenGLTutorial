@@ -29,6 +29,7 @@ public:
     void perspectiveProjection(float fov, float width, float height, float zNear, float zFar);
     void setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
     glm::mat4x4 getTransformation();
+    glm::mat4x4 getWorldTransformation();
 
 private:
     glm::vec3 m_scale;

@@ -25,7 +25,7 @@ cgf::TrackballCamera::TrackballCamera(GLFWwindow* window, int windowWidth, int w
     m_windowWidth = windowWidth;
     m_windowHeight = windowHeight;
     m_radius = radius;
-    m_theta = 0;
+    m_theta = -90.0f;
     m_phi = 0;
     m_target = target;
 
@@ -38,18 +38,44 @@ cgf::TrackballCamera::TrackballCamera(GLFWwindow* window, int windowWidth, int w
 
 bool cgf::TrackballCamera::onKeyboard(int key) {
     // do nothing
+    return true;
 }
 
 bool cgf::TrackballCamera::onMouse(int x, int y) {
-    float dTheta = (m_oldPosition.x - x) / 2;
-    float dPhi = (m_oldPosition.y - y) / 2;
+
+    // do nothing if button is not pressed
+    if (!m_mouseButtonPressed) return false;
+
+    // reset old position when mouse button just has been pressed
+    if (m_positionReseted) {
+        m_oldPosition.x = x;
+        m_oldPosition.y = y;
+        m_positionReseted = false;
+    }
+
+    float dPhi = (m_oldPosition.x - x) / 2;
+    float dTheta = (m_oldPosition.y - y) / 2;
     rotate(-dTheta, dPhi);
     m_oldPosition.x = x;
     m_oldPosition.y = y;
+
+    return true;
 }
 
 bool cgf::TrackballCamera::onMouseScroll(double xOffset, double yOffset) {
     zoom(yOffset);
+    return true;
+}
+
+bool cgf::TrackballCamera::onMouseButton(int button, int action) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        m_positionReseted = true;
+        m_mouseButtonPressed = true;
+    }
+    else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+        m_mouseButtonPressed = false;
+    }
+    return true;
 }
 
 void cgf::TrackballCamera::update() {
@@ -57,9 +83,16 @@ void cgf::TrackballCamera::update() {
     float theta = glm::radians(m_theta);
     float phi = glm::radians(m_phi);
 
-    m_position.x = m_radius * glm::sin(phi) * glm::sin(theta);
-    m_position.y = m_radius * glm::cos(phi);
-    m_position.z = m_radius * glm::sin(phi) * glm::cos(theta);
+    // limit
+    static float e = 0.000001f;
+    float lowerBorder = 0 + e;
+    float upperBorder = glm::pi<float>() - e;
+    theta = glm::max(lowerBorder, theta);
+    theta = glm::min(theta, upperBorder);
+
+    m_position.x = m_radius * glm::sin(theta) * glm::cos(phi);
+    m_position.y = m_radius * glm::cos(theta);
+    m_position.z = m_radius * glm::sin(theta) * glm::sin(phi);
 
     glm::vec3 look = glm::normalize(m_position - m_target);
     glm::vec3 worldUp(0.0f, 1.0f, 0.0f);

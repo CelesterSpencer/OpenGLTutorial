@@ -28,37 +28,72 @@
 // --------------------------------------------------------
 // global variables
 // --------------------------------------------------------
-const char* p__vertexShaderFileName = "shader/shader.vert";
+// shaders
+const char* p__vertexShaderFileName = "shader/lighting.vert";
 const char* p__fragmentShaderFileName = "shader/lighting.frag";
 GLuint shaderProgramLocation;
+
+// geometry
 GLuint VBO;
 GLuint IBO;
-GLuint gWorldLocation;
-GLuint gSampler;
-GLuint gDirLightColorLocation;
-GLuint gDirLightAmbientIntensityLocation;
-cgf::Texture* pTexture = NULL;
-cgf::Camera* m_camera;
-
-float WINDOW_WIDTH = 1024;
-float WINDOW_HEIGHT = 768;
-
 struct Vertex {
     glm::vec3 m_pos;
     glm::vec2 m_tex;
+    glm::vec3 m_normal;
 
     Vertex() {}
-
-    Vertex(glm::vec3 pos, glm::vec2 tex)
-    {
+    Vertex(glm::vec3 pos, glm::vec2 tex) {
         m_pos = pos;
         m_tex = tex;
+        m_normal = glm::vec3(0.0f, 0.0f, 0.0f);
     }
 };
 
+// transformation matrices
+GLuint gMVPLocation;
+GLuint gWorldLocation;
+
+// light handles
+GLuint gDirLightColorLocation;
+GLuint gDirLightAmbientIntensityLocation;
+GLuint gDirLightDirectionLocation;
+GLuint gDirLightDiffuseIntensityLocation;
+GLuint gEyeWorldPosLocation;
+GLuint gMatSpecularIntensityLocation;
+GLuint gMatSpecularPowerLocation;
+
+// material
+struct Material {
+    float m_specularIntensity;
+    float m_specularPower;
+
+    Material() {}
+    Material(float specularIntensity, float specularPower) {
+        m_specularIntensity = specularIntensity;
+        m_specularPower = specularPower;
+    }
+} m_material;
+
+// texture
+GLuint gSampler;
+cgf::Texture* pTexture = NULL;
+
+// camera
+cgf::Camera* m_camera;
+
+// mouse
+bool mouseBtnPressed = false;
+
+// window
+float WINDOW_WIDTH = 1024;
+float WINDOW_HEIGHT = 768;
+
+// directional Light
 struct DirectionalLight {
     glm::vec3 color;
     float ambientIntensity;
+    glm::vec3 direction;
+    float diffuseIntensity;
 } m_directionalLight;
 
 
@@ -71,6 +106,13 @@ void errorCallback(int error, const char* description) {
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+
+    // check whether ImGUI is handling this
+    ImGuiIO& io = ImGui::GetIO();
+    if ( io.WantCaptureKeyboard ) {
+        return;
+    }
+
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     } else {
@@ -79,7 +121,18 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 }
 
 void cursorCallback(GLFWwindow* window, double xPos, double yPos) {
+
+    // check whether ImGUI is handling this
+    ImGuiIO& io = ImGui::GetIO();
+    if ( io.WantCaptureMouse ) {
+        return;
+    }
+
     m_camera->onMouse(xPos, yPos);
+}
+
+void mouseBtnCallback(GLFWwindow* window, int button, int action, int mods) {
+    m_camera->onMouseButton(button, action);
 }
 
 void mouseWheelCallback(GLFWwindow* window, double xOffset, double yOffset) {
@@ -103,22 +156,17 @@ void printOpenGLInfo() {
 // gui
 // --------------------------------------------------------
 void showGUI() {
-    {
-        static float r = 1.0f;
-        static float g = 1.0f;
-        static float b = 1.0f;
-        static float a = 0.5f;
-        ImGui::Text("Hello, world!");
-        ImGui::SliderFloat("r", &r, 0.0f, 1.0f);
-        ImGui::SliderFloat("g", &g, 0.0f, 1.0f);
-        ImGui::SliderFloat("b", &b, 0.0f, 1.0f);
-        ImGui::SliderFloat("alpha", &a, 0.0f, 1.0f);
-        m_directionalLight.color.x = r;
-        m_directionalLight.color.y = g;
-        m_directionalLight.color.z = b;
-        m_directionalLight.ambientIntensity = a;
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    }
+    ImGui::Text("Ambient Light");
+    ImGui::SliderFloat("r", &m_directionalLight.color.x, 0.0f, 1.0f);
+    ImGui::SliderFloat("g", &m_directionalLight.color.y, 0.0f, 1.0f);
+    ImGui::SliderFloat("b", &m_directionalLight.color.z, 0.0f, 1.0f);
+    ImGui::SliderFloat("alpha", &m_directionalLight.ambientIntensity, 0.0f, 1.0f);
+    ImGui::Text("Diffuse Light");
+    ImGui::SliderFloat("diffuse intensity", &m_directionalLight.diffuseIntensity, 0.0f, 1.0f);
+    ImGui::Text("Specular Light");
+    ImGui::SliderFloat("specular intensity", &m_material.m_specularIntensity, 0.0f, 1.0f);
+    ImGui::SliderFloat("specular power", &m_material.m_specularPower, 0.0f, 50.0f);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 }
 
 
@@ -126,24 +174,74 @@ void showGUI() {
 // --------------------------------------------------------
 // setup lighting
 // --------------------------------------------------------
+void calculateNormals(unsigned int* pIndices, unsigned int indexCount, Vertex* pVertices, unsigned int vertexCount) {
+    for (unsigned int i = 0 ; i < indexCount ; i += 3) {
+        unsigned int Index0 = pIndices[i];
+        unsigned int Index1 = pIndices[i + 1];
+        unsigned int Index2 = pIndices[i + 2];
+        glm::vec3 v1 = pVertices[Index1].m_pos - pVertices[Index0].m_pos;
+        glm::vec3 v2 = pVertices[Index2].m_pos - pVertices[Index0].m_pos;
+        glm::vec3 Normal = glm::cross(v1, v2);
+        Normal = glm::normalize(Normal);
+
+        pVertices[Index0].m_normal += Normal;
+        pVertices[Index1].m_normal += Normal;
+        pVertices[Index2].m_normal += Normal;
+    }
+
+    for (unsigned int i = 0 ; i < vertexCount ; i++) {
+        pVertices[i].m_normal = glm::normalize(pVertices[i].m_normal);
+    }
+}
+
 void setupLighting() {
     m_directionalLight.color = glm::vec3(1.0f,1.0f,1.0f);
     m_directionalLight.ambientIntensity = 0.5f;
-    std::cout << "shader program location is " << shaderProgramLocation << std::endl;
+    m_directionalLight.direction = glm::vec3(4.0f, -3.0f, 0.0f);
+    m_directionalLight.diffuseIntensity = 0.4f;
+
     gDirLightColorLocation = glGetUniformLocation(shaderProgramLocation, "gDirectionalLight.color");
     gDirLightAmbientIntensityLocation = glGetUniformLocation(shaderProgramLocation, "gDirectionalLight.ambientIntensity");
+    gDirLightDirectionLocation = glGetUniformLocation(shaderProgramLocation, "gDirectionalLight.direction");
+    gDirLightDiffuseIntensityLocation = glGetUniformLocation(shaderProgramLocation, "gDirectionalLight.diffuseIntensity");
+    gEyeWorldPosLocation = glGetUniformLocation(shaderProgramLocation, "gEyeWorldPos");
+    gMatSpecularIntensityLocation = glGetUniformLocation(shaderProgramLocation, "gMatSpecularIntensity");
+    gMatSpecularPowerLocation = glGetUniformLocation(shaderProgramLocation, "gSpecularPower");
 
-    if (gDirLightColorLocation == 0xffffffff) {
+    if (gDirLightColorLocation == 0xffffffff ||
+            gDirLightAmbientIntensityLocation == 0xffffffff ||
+            gDirLightDirectionLocation == 0xffffffff ||
+            gDirLightDiffuseIntensityLocation == 0xffffffff ||
+            gEyeWorldPosLocation == 0xffffffff ||
+            gMatSpecularIntensityLocation == 0xffffffff ||
+            gMatSpecularPowerLocation  == 0xffffffff) {
         fprintf(stderr, "Warning! Unable to get the location light color\n");
     }
-    if (gDirLightAmbientIntensityLocation == 0xffffffff) {
-        fprintf(stderr, "Warning! Unable to get the location light ambient\n");
-    }
+
 }
 
 void setLighting(DirectionalLight& Light) {
     glUniform3f(gDirLightColorLocation, Light.color.x, Light.color.y, Light.color.z);
     glUniform1f(gDirLightAmbientIntensityLocation, Light.ambientIntensity);
+    glm::vec3 direction = Light.direction;
+    glm::normalize(direction);
+    glUniform3f(gDirLightDirectionLocation, direction.x, direction.y, direction.z);
+    glUniform1f(gDirLightDiffuseIntensityLocation, Light.diffuseIntensity);
+}
+
+
+
+// --------------------------------------------------------
+// material
+// --------------------------------------------------------
+void setupMaterial() {
+    m_material.m_specularIntensity = 1.0f;
+    m_material.m_specularPower = 32.0f;
+}
+
+void setMaterial(Material& material) {
+    glUniform1f(gMatSpecularIntensityLocation, material.m_specularIntensity);
+    glUniform1f(gMatSpecularPowerLocation, material.m_specularPower);
 }
 
 
@@ -151,12 +249,13 @@ void setLighting(DirectionalLight& Light) {
 // --------------------------------------------------------
 // drawing
 // --------------------------------------------------------
-void createVertexBuffer() {
+void createVertexBuffer(unsigned int* pIndices, unsigned int IndexCount) {
     Vertex vertices[4] = { Vertex(glm::vec3(-1.0f, -1.0f, 0.5773f),  glm::vec2(0.0f, 0.0f)),
                            Vertex(glm::vec3(0.0f, -1.0f, -1.15475f), glm::vec2(0.5f, 0.0f)),
                            Vertex(glm::vec3(1.0f, -1.0f, 0.5773f),   glm::vec2(1.0f, 0.0f)),
                            Vertex(glm::vec3(0.0f, 1.0f, 0.0f),       glm::vec2(0.5f, 1.0f)) };
 
+    calculateNormals(pIndices, IndexCount, vertices, 4);
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -168,6 +267,8 @@ void createIndexBuffer() {
                                1, 3, 2,
                                2, 3, 0,
                                0, 1, 2 };
+
+    createVertexBuffer(indices, 12);
 
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
@@ -189,15 +290,22 @@ void drawGeometry(GLFWwindow* window) {
     p.perspectiveProjection(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 0.1f, 100.0f);
     m_camera->update();
     p.setCamera(m_camera->getPosition(), m_camera->getTarget(), m_camera->getUp());
-    glUniformMatrix4fv(gWorldLocation, 1, GL_FALSE, value_ptr(p.getTransformation()));
+    glUniformMatrix4fv(gMVPLocation, 1, GL_FALSE, value_ptr(p.getTransformation()));
+    glUniformMatrix4fv(gWorldLocation, 1, GL_FALSE, value_ptr(p.getWorldTransformation()));
+
     setLighting(m_directionalLight);
+    setMaterial(m_material);
+    glm::vec3 eyeWorldPos = m_camera->getPosition();
+    glUniform3f(gEyeWorldPosLocation, eyeWorldPos.x, eyeWorldPos.y, eyeWorldPos.z);
 
     // update attribute
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)20);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     pTexture->bind(GL_TEXTURE0);
 
@@ -207,6 +315,7 @@ void drawGeometry(GLFWwindow* window) {
     // disable attributes after they have been used
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 }
 
 
@@ -310,7 +419,12 @@ void compileShaders() {
     glUseProgram(shaderProgram);
 
     // now variables within the shader program can be querryed
+    gMVPLocation = glGetUniformLocation(shaderProgram, "gMVP");
     gWorldLocation = glGetUniformLocation(shaderProgram, "gWorld");
+    if(gMVPLocation == 0xFFFFFFFF) {
+        fprintf(stderr, "Cannot find location of property within the shaders");
+        exit(1);
+    }
     if(gWorldLocation == 0xFFFFFFFF) {
         fprintf(stderr, "Cannot find location of property within the shaders");
         exit(1);
@@ -340,8 +454,14 @@ int main() {
 
         // set glfw context and relevant callbacks
         glfwMakeContextCurrent(window);
+
+        // setup ImGui binding
+        ImGui_ImplGlfwGL3_Init(window, true);
+
+        // set glfw callbacks
         glfwSetKeyCallback(window, keyCallback);
         glfwSetCursorPosCallback(window, cursorCallback);
+        glfwSetMouseButtonCallback(window, mouseBtnCallback);
         glfwSetScrollCallback(window, mouseWheelCallback);
 
         // initialize gl3w in order being able to use the opengl features
@@ -360,12 +480,14 @@ int main() {
             glFrontFace(GL_CW);
             glCullFace(GL_BACK);
             glEnable(GL_CULL_FACE);
-            createVertexBuffer();
             createIndexBuffer();
             compileShaders();
 
             // setup light
             setupLighting();
+
+            // setup material
+            setupMaterial();
 
             // set sampler and load texture
             glUniform1i(gSampler, 0);
@@ -378,9 +500,6 @@ int main() {
             glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
             cgf::TrackballCamera camera = cgf::TrackballCamera(window, WINDOW_WIDTH, WINDOW_HEIGHT, 10, cameraTarget);
             m_camera = &camera;
-
-            // setup ImGui binding
-            ImGui_ImplGlfwGL3_Init(window, false);
 
             // run until user closes the window or presses ALT+F4
             while (!glfwWindowShouldClose(window)) {

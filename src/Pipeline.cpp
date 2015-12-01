@@ -149,3 +149,16 @@ glm::mat4x4 Pipeline::getTransformation() {
 
     return m_WTransform;
 }
+
+glm::mat4x4 Pipeline::getWorldTransformation() {
+    glm::mat4x4 scale, rotate, translate, cameraRot, cameraTrans, persProj;
+
+    initScaleTransform(scale, m_scale.x, m_scale.y, m_scale.z);
+    initRotationTransform(rotate, m_rotation.x, m_rotation.y, m_rotation.z);
+    initTranslationTransform(translate, m_position.x, m_position.y, m_position.z);
+    initTranslationTransform(cameraTrans, -m_camera.pos.x, -m_camera.pos.y, -m_camera.pos.z);
+
+    m_WTransform = translate * rotate * scale;
+
+    return m_WTransform;
+}

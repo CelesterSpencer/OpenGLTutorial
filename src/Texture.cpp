@@ -32,3 +32,11 @@ void cgf::Texture::bind(GLenum textureUnit) {
     glActiveTexture(textureUnit);
     glBindTexture(m_textureTarget, m_textureObj);
 }
+
+void cgf::Texture::printDebugInfo(std::string whitespace) {
+    std::cout << whitespace << "Texture:" << std::endl;
+    whitespace += "|  ";
+    std::cout << whitespace << "Name: '" << m_fileName << "':" << std::endl;
+    std::cout << whitespace << "Texture Target: " << m_textureTarget << std::endl;
+    std::cout << whitespace << "Texture Object: " << m_textureObj << std::endl;
+}

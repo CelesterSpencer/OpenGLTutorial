@@ -19,6 +19,8 @@ namespace cgf {
         bool load();
         void bind(GLenum textureUnit);
 
+        void printDebugInfo(std::string whitespace = "");
+
     private:
         std::string m_fileName;
         GLenum m_textureTarget;

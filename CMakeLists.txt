@@ -5,12 +5,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake CACHE PATH "Project specific path. Set manually if it was not found.")
 set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps)
 
-#find_package(ASSIMP REQUIRED)
+find_package(ASSIMP REQUIRED)
 find_package(GLFW3 REQUIRED)
 find_package(GLM REQUIRED)
 
 include_directories(
-        #${ASSIMP_INCLUDE_DIR}
+        ${ASSIMP_INCLUDE_DIR}
         ${GLFW3_INCLUDE_PATH}
         ${GLM_INCLUDE_PATH}
         ${EXTERNAL_DIR}/gl3w/include
@@ -21,14 +21,14 @@ include_directories(
 # copy dlls
 set(DLLS
         ${GLFW3_DLL}
-        #${ASSIMP_DLL}
+        ${ASSIMP_DLL}
 )
 file(COPY ${DLLS} DESTINATION /)
 
 # copy other files
 file(COPY shader DESTINATION /)
 file(COPY textures DESTINATION /)
-#file(COPY model DESTINATION /)
+file(COPY model DESTINATION /)
 
 # add source files
 file(GLOB_RECURSE SOURCE_FILES
@@ -68,5 +68,5 @@ target_link_libraries(OpenGLTutorial
         version.lib
         imm32.lib
         winmm.lib
-        #${ASSIMP_LIBRARY}
+        ${ASSIMP_LIBRARY}
 )

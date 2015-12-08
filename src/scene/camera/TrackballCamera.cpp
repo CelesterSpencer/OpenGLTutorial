@@ -25,7 +25,7 @@ cgf::TrackballCamera::TrackballCamera(GLFWwindow* window, int windowWidth, int w
     m_windowWidth = windowWidth;
     m_windowHeight = windowHeight;
     m_radius = radius;
-    m_theta = -90.0f;
+    m_theta = 0.0f;
     m_phi = 0;
     m_target = target;
 

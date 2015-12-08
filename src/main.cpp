@@ -20,11 +20,11 @@
 #include "imgui_impl_glfw_gl3.h"
 
 // internal includes
-#include "Pipeline.h"
-#include "Camera.h"
-#include "TrackballCamera.h"
-#include "Texture.h"
-#include "Mesh.h"
+#include "scene/Pipeline.h"
+#include "scene/camera/Camera.h"
+#include "scene/camera/TrackballCamera.h"
+#include "scene/geometry/Texture.h"
+#include "scene/geometry/Mesh.h"
 
 
 // --------------------------------------------------------
@@ -56,7 +56,8 @@ GLuint gLightPositionLocation;
 GLuint gConstantAttLocation;
 GLuint gLinearAttLocation;
 GLuint gExpAttLocation;
-
+GLuint gRimLightColorLocation;
+GLuint gRimLightRimExponentialLocation;
 
 // material
 struct Material {
@@ -105,6 +106,10 @@ struct PointLight {
         float exponential;
     } attenuation;
 } m_pointLight;
+struct RimLight {
+    glm::vec3 color;
+    float rimExponential;
+} m_rimLight;
 
 
 
@@ -112,6 +117,12 @@ struct PointLight {
 // --------------------------------------------------------
 // glfw callbacks
 // --------------------------------------------------------
+void resizeCallback(GLFWwindow* window, int width, int height) {
+    WINDOW_WIDTH = width;
+    WINDOW_HEIGHT = height;
+    glViewport(0,0, width, height);
+}
+
 void errorCallback(int error, const char* description) {
     fputs(description, stderr);
 }
@@ -388,12 +399,34 @@ void setPointLight(PointLight &light) {
     glUniform1f(gExpAttLocation, light.attenuation.exponential);
 }
 
+void setupRimLight() {
+    m_rimLight.color = glm::vec3(0.0f, 0.0f, 1.0f);
+    m_rimLight.rimExponential = 1.0f;
+
+    gRimLightColorLocation = glGetUniformLocation(shaderProgramLocation, "gRimLight.color");
+    gRimLightRimExponentialLocation = glGetUniformLocation(shaderProgramLocation, "gRimLight.rimExponential");
+
+    if (gRimLightColorLocation == 0xffffffff ||
+        gRimLightRimExponentialLocation == 0xffffffff) {
+        fprintf(stderr, "Warning! Unable to get the location of the rim light\n");
+    }
+}
+
+void setRimLight(RimLight &light) {
+    glUniform3f(gRimLightColorLocation, light.color.x, light.color.y, light.color.z);
+    glUniform1f(gRimLightRimExponentialLocation, light.rimExponential);
+}
 
 
 // --------------------------------------------------------
 // gui
 // --------------------------------------------------------
 void showGUI() {
+
+    static bool bla = true;
+    static bool menu = true;
+
+    ImGui::Begin("About ImGui", &bla, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Select Light source");
     const char* items[] = {"Directional Light", "Point Light"};
     static int currentItem = 0;
@@ -414,6 +447,7 @@ void showGUI() {
         ImGui::SliderFloat("specular power", &m_material.m_specularPower, 0.0f, 50.0f);
     } else if (currentItem == 1) {
         if (currentItem != oldItem) setupPointLight();
+        if (currentItem != oldItem) setupRimLight();
         ImGui::Text("Ambient Light");
         ImGui::SliderFloat("r", &m_pointLight.color.x, 0.0f, 1.0f);
         ImGui::SliderFloat("g", &m_pointLight.color.y, 0.0f, 1.0f);
@@ -426,10 +460,16 @@ void showGUI() {
         ImGui::SliderFloat("specular power", &m_material.m_specularPower, 0.0f, 50.0f);
         ImGui::SliderFloat("Linear attenuation", &m_pointLight.attenuation.linear, 0.0f, 1.0f);
         ImGui::SliderFloat("Exp attenuation", &m_pointLight.attenuation.exponential, 0.0f, 1.0f);
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
-                    ImGui::GetIO().Framerate);
+
     }
+    ImGui::Text("Rim Light");
+    ImGui::SliderFloat("rim r", &m_rimLight.color.x, 0.0f, 1.0f);
+    ImGui::SliderFloat("rim g", &m_rimLight.color.y, 0.0f, 1.0f);
+    ImGui::SliderFloat("rim b", &m_rimLight.color.z, 0.0f, 1.0f);
+    ImGui::SliderFloat("rim exp", &m_rimLight.rimExponential, 1.0f, 50.0f);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     oldItem = currentItem;
+    ImGui::End();
 }
 
 
@@ -505,6 +545,7 @@ void drawGeometry(GLFWwindow* window) {
             setPointLight(m_pointLight);
             break;
     }
+    setRimLight(m_rimLight);
 
     setMaterial(m_material);
     glm::vec3 eyeWorldPos = m_camera->getPosition();
@@ -541,6 +582,7 @@ int main() {
         ImGui_ImplGlfwGL3_Init(window, true);
 
         // set glfw callbacks
+        glfwSetWindowSizeCallback(window, resizeCallback);
         glfwSetKeyCallback(window, keyCallback);
         glfwSetCursorPosCallback(window, cursorCallback);
         glfwSetMouseButtonCallback(window, mouseBtnCallback);
@@ -559,7 +601,7 @@ int main() {
 
             // setup stuff
             glClearColor(0,0,0,0);
-            glFrontFace(GL_CW);
+            glFrontFace(GL_CCW);
             glCullFace(GL_BACK);
             glEnable(GL_CULL_FACE);
             glEnable(GL_DEPTH_TEST);
@@ -571,6 +613,7 @@ int main() {
                     break;
                 case LightMode::POINT_LIGHT:
                     setupPointLight();
+                    setupRimLight();
                     break;
             }
 

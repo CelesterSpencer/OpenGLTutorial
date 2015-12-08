@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake CACHE PATH "Project specific path. Set manually if it was not found.")
+set(OPENGL_TUTORIAL_SRC ${CMAKE_SOURCE_DIR}/src)
 set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps)
 
 find_package(ASSIMP REQUIRED)
@@ -10,6 +11,7 @@ find_package(GLFW3 REQUIRED)
 find_package(GLM REQUIRED)
 
 include_directories(
+        ${OPENGL_TUTORIAL_SRC}
         ${ASSIMP_INCLUDE_DIR}
         ${GLFW3_INCLUDE_PATH}
         ${GLM_INCLUDE_PATH}
@@ -32,7 +34,7 @@ file(COPY model DESTINATION /)
 
 # add source files
 file(GLOB_RECURSE SOURCE_FILES
-        "src/*.cpp"
+        "${OPENGL_TUTORIAL_SRC}/*.cpp"
 )
 
 # add gl3w
@@ -69,4 +71,11 @@ target_link_libraries(OpenGLTutorial
         imm32.lib
         winmm.lib
         ${ASSIMP_LIBRARY}
+)
+
+# copy shader files every time the project is built
+add_custom_target(copy_shaders ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/shader" "${CMAKE_BINARY_DIR}/shader"
+        COMMENT "Copied shaders from ${CMAKE_SOURCE_DIR}/shader to ${CMAKE_BINARY_DIR}/shader" VERBATIM
 )

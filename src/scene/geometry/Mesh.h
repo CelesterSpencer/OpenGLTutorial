@@ -13,7 +13,7 @@
 #include <assimp/postprocess.h>
 #include <glm.hpp>
 
-#include "Constants.h"
+#include "../../util/Constants.h"
 #include "Texture.h"
 
 class Mesh {

@@ -35,7 +35,7 @@ void main() {
 		               diffuseFactor;
 
 		vec3 vertexToEye = normalize(gEyeWorldPos - worldPos0);
-		vec3 lightReflect = normalize(reflect(-gDirectionalLight.direction, normal));
+		vec3 lightReflect = normalize(reflect(gDirectionalLight.direction, normal));
 		float specularFactor = dot(vertexToEye, lightReflect);
 
 		if(specularFactor > 0) {

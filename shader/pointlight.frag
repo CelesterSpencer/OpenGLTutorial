@@ -20,7 +20,13 @@ struct PointLight{
     Attenuation attenuation;
 };
 
+struct RimLight{
+    vec3 color;
+    float rimExponential;
+};
+
 uniform PointLight gPointLight;
+uniform RimLight gRimLight;
 uniform sampler2D gSampler;
 uniform vec3 gEyeWorldPos;
 uniform float gMatSpecularIntensity;
@@ -36,7 +42,7 @@ vec4 calcLightInternal(PointLight light, vec3 lightDirection, vec3 normal) {
         diffuseColor = vec4(light.color * light.diffuseIntensity * diffuseFactor, 1.0f);
         vec3 vertexToEye = normalize(gEyeWorldPos - worldPos0);
         vec3 lightReflect = normalize(reflect(lightDirection, normal));
-        float specularFactor = dot(vertexToEye, -lightReflect);
+        float specularFactor = dot(vertexToEye, lightReflect);
         if (specularFactor > 0) {
             specularFactor = pow(specularFactor, gSpecularPower);
             specularColor = vec4(light.color * gMatSpecularIntensity * specularFactor, 1.0f);
@@ -56,7 +62,13 @@ vec4 calcPointLight(vec3 normal) {
                         gPointLight.attenuation.linear * distance +
                         gPointLight.attenuation.exponential * distance * distance;
 
-    return color / attenuation;
+    vec3 invEyeDir = normalize(gEyeWorldPos - worldPos0);
+    float rimFactor = dot(invEyeDir, normal);
+    rimFactor = rimFactor * gRimLight.rimExponential;
+    rimFactor = 1 - rimFactor;
+    vec4 rimColor = vec4(gRimLight.color, 1) * rimFactor;
+
+    return color / attenuation + clamp(rimColor, 0.0f, 1.0f);
 }
 
 void main() {

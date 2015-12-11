@@ -6,35 +6,19 @@
 #define SRCCMAKE_PARAMETERIZABLE_H
 
 
-#include "PropertiesObject.h"
-
 #include <string>
 #include <vector>
 
+#include "PropertiesCollection.h"
 
-class Parameterizable {
 
-public:
+namespace cgf {
+    class Parameterizable {
 
-    std::string getParameterizableName() {
-        return m_parameterizableName;
-    }
-    std::vector<PropertiesObject> getProperties() {
-        return m_propertiesObject;
-    }
+    public:
+        virtual PropertiesCollection* getPropertiesCollection() =0;
 
-protected:
-    void setParametrizableName(std::string parameterizableName) {
-        m_parameterizableName = parameterizableName;
-    }
-    void addProperitesObject(PropertiesObject propertiesObject) {
-        m_propertiesObject = propertiesObject;
-    }
-
-private:
-    std::string m_parameterizableName;
-    std::vector<PropertiesObject> m_propertiesObject;
-
-};
+    };
+}
 
 #endif //SRCCMAKE_PARAMETERIZABLE_H

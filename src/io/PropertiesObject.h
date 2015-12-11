@@ -27,7 +27,6 @@ namespace cgf {
             mp_value = value;
             m_type = type;
         }
-
     };
 }
 

@@ -8,24 +8,29 @@
 #include <glm.hpp>
 #include <glfw/glfw3.h>
 
+#include "Interactable.h"
+
 
 namespace cgf {
-    class Camera {
+    class Camera : public Interactable {
     public:
-        virtual bool onKeyboard(int key) =0;
-        virtual bool onMouse(int x, int y) =0;
-        virtual bool onMouseScroll(double xOffset, double yOffset) =0;
-        virtual bool onMouseButton(int button, int action) =0;
-        virtual void update() =0;
 
+        // getter and setter
         glm::vec3 getPosition() { return m_position; };
         glm::vec3 getTarget() { return m_target; };
         glm::vec3 getUp() { return m_up; };
-
         void setWindowSize(int windowWidth, int windowHeight) {
             m_windowWidth = windowWidth;
             m_windowHeight = windowHeight;
         }
+
+        virtual void update() =0;
+
+        // inherited from Interactable
+        virtual bool onKeyboard(int key) =0;
+        virtual bool onMouse(int x, int y) =0;
+        virtual bool onMouseScroll(double xOffset, double yOffset) =0;
+        virtual bool onMouseButton(int button, int action) =0;
 
     protected:
         glm::vec3 m_position;

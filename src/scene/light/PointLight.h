@@ -6,32 +6,40 @@
 #define SRCCMAKE_POINTLIGHT_H
 
 
-#include "Light.h"
-
+#include <iostream>
 #include <string>
 #include <glm.hpp>
+
+#include "Light.h"
+#include "io/Parameterizable.h"
 
 #include "util/Constants.h"
 
 
-class PointLight: public Light {
+namespace cgf {
+    class PointLight : public Light, public Parameterizable {
 
-public:
-    PointLight(std::string name, glm::vec3 position, glm::vec3 color);
-    ~PointLight();
+    public:
+        PointLight(std::string name, glm::vec3 position, glm::vec3 color);
+        ~PointLight();
 
-    virtual void init(GLuint shaderProgramLocation);
-    virtual void update();
+        // inherited from Light
+        virtual void init(GLuint shaderProgramLocation) override;
+        virtual void update() override;
 
-private:
-    std::string m_name;
-    glm::vec3 m_color;
-    glm::vec3 m_position;
+        // inherited from Parameterizable
+        virtual PropertiesCollection* getPropertiesCollection() override;
 
-    GLuint m_colorLocation;
-    GLuint m_positionLocation;
+    private:
+        std::string m_name;
+        glm::vec3 m_color;
+        glm::vec3 m_position;
 
-};
+        GLuint m_colorLocation;
+        GLuint m_positionLocation;
+
+    };
+}
 
 
 #endif //SRCCMAKE_POINTLIGHT_H

@@ -24,17 +24,17 @@ namespace cgf {
             return m_name;
         }
 
-        void addPropertiesObject(PropertiesObject* p_propertiesObject) {
-            mp_propertyObjects->push_back(p_propertiesObject);
+        void addPropertiesObject(PropertiesObject p_propertiesObject) {
+            mp_propertyObjects.push_back(p_propertiesObject);
         }
 
-        std::vector<PropertiesObject*>* getPropertyObjects() {
+        std::vector<PropertiesObject> getPropertyObjects() {
             return mp_propertyObjects;
         }
 
     private:
         std::string m_name;
-        std::vector<PropertiesObject*>* mp_propertyObjects;
+        std::vector<PropertiesObject> mp_propertyObjects;
 
     };
 }

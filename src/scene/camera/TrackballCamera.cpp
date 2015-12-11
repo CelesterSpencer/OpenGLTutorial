@@ -63,6 +63,7 @@ bool cgf::TrackballCamera::onMouse(int x, int y) {
 }
 
 bool cgf::TrackballCamera::onMouseScroll(double xOffset, double yOffset) {
+    std::cout << "Trackballcamera scroll " << yOffset << std::endl;
     zoom(yOffset);
     return true;
 }

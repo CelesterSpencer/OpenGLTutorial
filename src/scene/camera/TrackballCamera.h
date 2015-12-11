@@ -21,11 +21,15 @@ namespace cgf {
         TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight);
         TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight, float radius, glm::vec3 target);
 
-        virtual bool onKeyboard(int key);
-        virtual bool onMouse(int x, int y);
-        virtual bool onMouseScroll(double xOffset, double yOffset);
-        virtual bool onMouseButton(int button, int action);
+        // inherited from Camera
         virtual void update();
+
+        // inherited from Interactable
+        virtual bool onKeyboard(int key) override;
+        virtual bool onMouse(int x, int y) override;
+        virtual bool onMouseScroll(double xOffset, double yOffset) override;
+        virtual bool onMouseButton(int button, int action) override;
+
 
     private:
         float m_radius;

@@ -4,8 +4,12 @@
 
 #include "GuiManager.h"
 
-cgf::GuiManager::GuiManager() {
+cgf::GuiManager::GuiManager(GLFWwindow* window) {
+    ImGui_ImplGlfwGL3_Init(window, true);
+}
 
+cgf::GuiManager::~GuiManager() {
+    ImGui_ImplGlfwGL3_Shutdown();
 }
 
 void extract(std::string label, int* p_val) {
@@ -31,22 +35,24 @@ void cgf::GuiManager::render() {
 
     static bool showWindow = true;
 
-    ImGui::Begin("Menu", &showWindow, ImGuiWindowFlags_AlwaysAutoResize);
+    // set new frame
+    ImGui_ImplGlfwGL3_NewFrame();
 
+    ImGui::Begin("Menu", &showWindow, ImGuiWindowFlags_AlwaysAutoResize);
     // iterate over all property collections
     for (cgf::PropertiesCollection* p_propertiesCollection : *mp_propertiesCollections) {
         if(ImGui::CollapsingHeader(p_propertiesCollection->getName().c_str())) {
             // iterate over all property objects in the collection
-            for (PropertiesObject *p_propertiesObject : *p_propertiesCollection->getPropertyObjects()) {
-                switch (p_propertiesObject->m_type) {
+            for (PropertiesObject p_propertiesObject : p_propertiesCollection->getPropertyObjects()) {
+                switch (p_propertiesObject.m_type) {
                     case PropertiesObject::PropertyType::INT :
-                        extract(p_propertiesObject->m_label, static_cast<int*>(p_propertiesObject->mp_value));
+                        extract(p_propertiesObject.m_label, static_cast<int*>(p_propertiesObject.mp_value));
                         break;
                     case PropertiesObject::PropertyType::FLOAT :
-                        extract(p_propertiesObject->m_label, static_cast<float*>(p_propertiesObject->mp_value));
+                        extract(p_propertiesObject.m_label, static_cast<float*>(p_propertiesObject.mp_value));
                         break;
                     case PropertiesObject::PropertyType::VEC3 :
-                        extract(p_propertiesObject->m_label, static_cast<glm::vec3*>(p_propertiesObject->mp_value));
+                        extract(p_propertiesObject.m_label, static_cast<glm::vec3*>(p_propertiesObject.mp_value));
                         break;
                 }
             }
@@ -54,8 +60,49 @@ void cgf::GuiManager::render() {
     }
     ImGui::End();
 
+    // finally show gui
+    ImGui::Render();
 }
 
 void cgf::GuiManager::addPropertiesCollection(cgf::PropertiesCollection* p_propertiesCollection) {
+    mp_propertiesCollections->push_back(p_propertiesCollection);
+}
 
+void cgf::GuiManager::removePropertiesCollection(cgf::PropertiesCollection *p_propertiesCollection) {
+    for( std::vector<cgf::PropertiesCollection *>::iterator iter = mp_propertiesCollections->begin(); iter != mp_propertiesCollections->end(); ++iter ) {
+        if( *iter == p_propertiesCollection) {
+            mp_propertiesCollections->erase( iter );
+            break;
+        }
+    }
+}
+
+bool cgf::GuiManager::onKeyboard(int key) {
+    if (m_doesConsumeInput) {
+        ImGuiIO& io = ImGui::GetIO();
+        return io.WantCaptureKeyboard;
+    }
+    return false;
+}
+
+bool cgf::GuiManager::onMouse(int x, int y) {
+    if (m_doesConsumeInput) {
+        ImGuiIO& io = ImGui::GetIO();
+        return io.WantCaptureMouse;
+    }
+    return false;
+}
+
+bool cgf::GuiManager::onMouseScroll(double xOffset, double yOffset) {
+    if (m_doesConsumeInput) {
+
+    }
+    return false;
+}
+
+bool cgf::GuiManager::onMouseButton(int button, int action) {
+    if (m_doesConsumeInput) {
+
+    }
+    return false;
 }

@@ -4,14 +4,14 @@
 
 #include "Mesh.h"
 
-Mesh::MeshEntry::MeshEntry() {
+cgf::Mesh::MeshEntry::MeshEntry() {
     VB = INVALID_GL_VALUE;
     IB = INVALID_GL_VALUE;
     numIndices  = 0;
     materialIndex = INVALID_MATERIAL;
 }
 
-Mesh::MeshEntry::~MeshEntry() {
+cgf::Mesh::MeshEntry::~MeshEntry() {
     if (VB != INVALID_GL_VALUE) {
         glDeleteBuffers(1, &VB);
     }
@@ -24,7 +24,7 @@ Mesh::MeshEntry::~MeshEntry() {
 /**
  * generate and bind buffers
  */
-void Mesh::MeshEntry::init(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+void cgf::Mesh::MeshEntry::init(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
     numIndices = indices.size();
     glGenBuffers(1, &VB);
     glBindBuffer(GL_ARRAY_BUFFER, VB);
@@ -37,22 +37,22 @@ void Mesh::MeshEntry::init(const std::vector<Vertex>& vertices, const std::vecto
 
 
 
-Mesh::Mesh() {
+cgf::Mesh::Mesh() {
     m_fileName = "MESH_NOT_SET_UP_YET";
 }
 
-Mesh::~Mesh() {
+cgf::Mesh::~Mesh() {
     clear();
 }
 
-void Mesh::clear() {
+void cgf::Mesh::clear() {
     // clear all textures
     for (unsigned int i = 0 ; i < m_textures.size() ; i++) {
         SAFE_DELETE(m_textures[i]);
     }
 }
 
-bool Mesh::loadMesh(const std::string& fileName) {
+bool cgf::Mesh::loadMesh(const std::string& fileName) {
     // release the previously loaded mesh, if it exists
     clear();
 
@@ -75,7 +75,7 @@ bool Mesh::loadMesh(const std::string& fileName) {
     return ret;
 }
 
-void Mesh::initMesh(unsigned int index, const aiMesh* paiMesh) {
+void cgf::Mesh::initMesh(unsigned int index, const aiMesh* paiMesh) {
     m_entries[index].materialIndex = paiMesh->mMaterialIndex;
 
     std::vector<Vertex> vertices;
@@ -114,7 +114,7 @@ void Mesh::initMesh(unsigned int index, const aiMesh* paiMesh) {
 
 }
 
-bool Mesh::initMaterials(const aiScene *pScene, const std::string &fileName) {
+bool cgf::Mesh::initMaterials(const aiScene *pScene, const std::string &fileName) {
 
     // Extract the directory part from the file name
     std::string::size_type SlashIndex = fileName.find_last_of("/");
@@ -161,6 +161,7 @@ bool Mesh::initMaterials(const aiScene *pScene, const std::string &fileName) {
 
         // if a model doesn't contain any textures then load a default white texture
         if (!m_textures[i]) {
+            std::cout << "Loading default white texture, because no texture has been provided" << std::endl;
             m_textures[i] = new cgf::Texture(GL_TEXTURE_2D, "./textures/debug/white.png");
             ret = m_textures[i]->load();
         }
@@ -169,7 +170,7 @@ bool Mesh::initMaterials(const aiScene *pScene, const std::string &fileName) {
     return ret;
 }
 
-bool Mesh::initFromScene(const aiScene *pScene, const std::string &fileName) {
+bool cgf::Mesh::initFromScene(const aiScene *pScene, const std::string &fileName) {
     m_entries.resize(pScene->mNumMeshes);
     m_textures.resize(pScene->mNumMaterials);
 
@@ -182,7 +183,7 @@ bool Mesh::initFromScene(const aiScene *pScene, const std::string &fileName) {
     return initMaterials(pScene, fileName);
 }
 
-void Mesh::render() {
+void cgf::Mesh::render() {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
@@ -210,7 +211,7 @@ void Mesh::render() {
     glDisableVertexAttribArray(2);
 }
 
-void Mesh::printDebugInfo(std::string whitespace) {
+void cgf::Mesh::printDebugInfo(std::string whitespace) {
     std::cout << whitespace << "Mesh:"  << std::endl;
     whitespace += "|  ";
     std::cout << whitespace << "Name: '" << m_fileName << "':" << std::endl;

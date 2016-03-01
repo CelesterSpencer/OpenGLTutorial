@@ -9,6 +9,10 @@
 cgf::TrackballCamera::TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight) {
     m_windowWidth = windowWidth;
     m_windowHeight = windowHeight;
+    m_angle = 30.0f;
+    m_near = 1.0f;
+    m_far = 1000.0f;
+
     m_radius = 1;
     m_theta = 0;
     m_phi = 0;
@@ -24,6 +28,27 @@ cgf::TrackballCamera::TrackballCamera(GLFWwindow* window, int windowWidth, int w
 cgf::TrackballCamera::TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight, float radius, glm::vec3 target) {
     m_windowWidth = windowWidth;
     m_windowHeight = windowHeight;
+    m_angle = 30.0f;
+    m_near = 1.0f;
+    m_far = 1000.0f;
+
+    m_radius = radius;
+    m_theta = 0.0f;
+    m_phi = 0;
+    m_target = target;
+
+    glfwSetCursorPos(window, windowWidth/2.0f, windowHeight/2.0f);
+
+    update();
+}
+
+cgf::TrackballCamera::TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight, float angle, float near, float far, float radius, glm::vec3 target) {
+    m_windowWidth = windowWidth;
+    m_windowHeight = windowHeight;
+    m_angle = 30.0f;
+    m_near = 1.0f;
+    m_far = 1000.0f;
+
     m_radius = radius;
     m_theta = 0.0f;
     m_phi = 0;

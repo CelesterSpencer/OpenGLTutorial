@@ -10,6 +10,7 @@
 
 #include <string>
 #include <glm.hpp>
+#include <iostream>
 
 #include "util/Constants.h"
 

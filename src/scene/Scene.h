@@ -14,6 +14,7 @@
 #include "camera/Camera.h"
 #include "scene/Pipeline.h"
 
+
 namespace cgf {
     class Scene {
 

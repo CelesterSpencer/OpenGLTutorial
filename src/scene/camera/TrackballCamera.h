@@ -20,6 +20,7 @@ namespace cgf {
     public:
         TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight);
         TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight, float radius, glm::vec3 target);
+        TrackballCamera(GLFWwindow* window, int windowWidth, int windowHeight, float angle, float near, float far, float radius, glm::vec3 target);
 
         // inherited from Camera
         virtual void update();

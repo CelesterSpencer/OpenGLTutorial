@@ -24,6 +24,7 @@
 #include "io/GuiManager.h"
 #include "InteractionManager.h"
 #include "ShaderManager.h"
+#include "scene/geometry/skybox/SkyBox.h"
 
 
 // window
@@ -51,12 +52,17 @@ GLFWwindow* initGlfw() {
     // set error callback function
     glfwSetErrorCallback(errorCallback);
 
+    // multisampling
+    glfwWindowHint(GLFW_SAMPLES, 1);
+
+
     // create glfw window
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "OpenGLTutorial", NULL, NULL);
     if (!window) {
         fprintf(stderr, "GLFW Window couldn't be initialized\n");
         exit(1);
     }
+
     // set glfw context and relevant callbacks
     glfwMakeContextCurrent(window);
     glfwSetWindowSizeCallback(window, resizeCallback);
@@ -74,6 +80,8 @@ void initGl3w() {
         std::cout << "OpenGL 3.2 not supported" << std::endl;
         exit(1);
     }
+
+    glEnable(GL_MULTISAMPLE);
 
 }
 
@@ -128,14 +136,14 @@ int main() {
 
     // setup and add light
     cgf::PointLight pointLight("gPointLight", glm::vec3(4, 5, 1), glm::vec3(1,1,1));
-    pointLight.init(shaderManager.getShaderProgramLocation());
     scene.addLight(&pointLight);
+    pointLight.init(shaderManager.getShaderProgramLocation());
 
     // load and add mesh
     cgf::Mesh mesh;
     mesh.loadMesh("./model/bunny/bunny.obj");
     scene.addMesh(&mesh);
-    cgf::BasicMaterial material(0.5f, 0.4f, 0.1f, 32.0f);
+    cgf::BasicMaterial material(0.33f, 0.6f, 0.3f, 50.0f);
     material.init(shaderManager.getShaderProgramLocation());
 
     // setup and add camera
@@ -152,9 +160,17 @@ int main() {
     p.perspectiveProjection(30.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 0.1f, 100.0f);
     scene.setPipeline(&p);
 
+    // setup skydome
+/*    cgf::SkyBox skyBox(&camera, &shaderManager);
+    skyBox.setup("model/skygeometry/",
+                 "sp3left.jpg", "sp3right.jpg",
+                 "sp3top.jpg", "sp3bot.jpg",
+                 "sp3front.jpg", "sp3back.jpg");*/
+
     // init guimanager
-/*    cgf::GuiManager guiManager(window);
-    guiManager.addPropertiesCollection(pointLight.getPropertiesCollection());*/
+    cgf::GuiManager guiManager(window);
+    guiManager.addPropertiesCollection(pointLight.getPropertiesCollection());
+    guiManager.addPropertiesCollection(material.getPropertiesCollection());
 
     // init interactionmanager
     cgf::InteractionManager interactionManager;
@@ -164,19 +180,20 @@ int main() {
     float rotation = 0.0f;
     // run until user closes the window or presses ALT+F4
     while (!glfwWindowShouldClose(window)) {
-
         // clear everythig first
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // let glfw check for key events
         glfwPollEvents();
 
-        // show the scene
+        // render scene
         rotation += 0.01f;
         p.rotation(.0f, rotation, 0.0f);
         material.update();
         scene.render();
 
+        // draw gui
+        guiManager.render();
         // swap buffers after new frame is filled successfully
         glfwSwapBuffers(window);
     }

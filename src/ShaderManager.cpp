@@ -2,6 +2,7 @@
 // Created by Windrian on 09.12.2015.
 //
 
+
 #include "ShaderManager.h"
 
 void cgf::ShaderManager::init() {

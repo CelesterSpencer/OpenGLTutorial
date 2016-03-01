@@ -16,7 +16,7 @@ void DirectionalLight::init(GLuint shaderProgramLocation) {
     m_directionLocation = glGetUniformLocation(shaderProgramLocation, (m_name + ".direction").c_str());
 
     if (m_colorLocation == INVALID_UNIFORM_LOCATION || m_directionLocation == INVALID_UNIFORM_LOCATION) {
-        fprintf(stderr, "Warning! Unable to initialize directional light \n");
+        std::cerr << "Warning! Unable to initialize directional light \n" << std::endl;
     }
 }
 

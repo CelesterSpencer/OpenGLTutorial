@@ -6,6 +6,7 @@
 
 cgf::GuiManager::GuiManager(GLFWwindow* window) {
     ImGui_ImplGlfwGL3_Init(window, true);
+    m_doesConsumeInput = true;
 }
 
 cgf::GuiManager::~GuiManager() {
@@ -33,14 +34,14 @@ void extract(std::string label, glm::vec3* p_val) {
 
 void cgf::GuiManager::render() {
 
-    static bool showWindow = true;
+    static bool showWindow = false;
 
     // set new frame
     ImGui_ImplGlfwGL3_NewFrame();
 
     ImGui::Begin("Menu", &showWindow, ImGuiWindowFlags_AlwaysAutoResize);
     // iterate over all property collections
-    for (cgf::PropertiesCollection* p_propertiesCollection : *mp_propertiesCollections) {
+    for (cgf::PropertiesCollection* p_propertiesCollection : m_propertiesCollections) {
         if(ImGui::CollapsingHeader(p_propertiesCollection->getName().c_str())) {
             // iterate over all property objects in the collection
             for (PropertiesObject p_propertiesObject : p_propertiesCollection->getPropertyObjects()) {
@@ -65,13 +66,15 @@ void cgf::GuiManager::render() {
 }
 
 void cgf::GuiManager::addPropertiesCollection(cgf::PropertiesCollection* p_propertiesCollection) {
-    mp_propertiesCollections->push_back(p_propertiesCollection);
+    std::cout << "add properties collection" << std::endl;
+    m_propertiesCollections.push_back(p_propertiesCollection);
+    std::cout << "add properties collection end" << std::endl;
 }
 
 void cgf::GuiManager::removePropertiesCollection(cgf::PropertiesCollection *p_propertiesCollection) {
-    for( std::vector<cgf::PropertiesCollection *>::iterator iter = mp_propertiesCollections->begin(); iter != mp_propertiesCollections->end(); ++iter ) {
+    for( std::vector<cgf::PropertiesCollection *>::iterator iter = m_propertiesCollections.begin(); iter != m_propertiesCollections.end(); ++iter ) {
         if( *iter == p_propertiesCollection) {
-            mp_propertiesCollections->erase( iter );
+            m_propertiesCollections.erase( iter );
             break;
         }
     }

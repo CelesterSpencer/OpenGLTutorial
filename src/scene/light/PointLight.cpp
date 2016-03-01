@@ -4,10 +4,13 @@
 
 #include "PointLight.h"
 
-cgf::PointLight::PointLight(std::string name, glm::vec3 position, glm::vec3 color) {
+cgf::PointLight::PointLight(std::string name, glm::vec3 position, glm::vec3 color) : Parameterizable(name) {
     m_name = name;
     m_position = position;
     m_color = color;
+
+    Parameterizable::addProperty(PropertiesObject("Pos", &m_position, PropertiesObject::VEC3));
+    Parameterizable::addProperty(PropertiesObject("Color", &m_color, PropertiesObject::VEC3));
 }
 
 cgf::PointLight::~PointLight() {
@@ -26,10 +29,4 @@ void cgf::PointLight::init(GLuint shaderProgramLocation) {
 void cgf::PointLight::update() {
     glUniform3f(m_colorLocation, m_color.x, m_color.y, m_color.z);
     glUniform3f(m_positionLocation, m_position.x, m_position.y, m_position.z);
-}
-
-cgf::PropertiesCollection* cgf::PointLight::getPropertiesCollection() {
-    PropertiesCollection collection("PointLight");
-    collection.addPropertiesObject(PropertiesObject("Pos", &m_position, PropertiesObject::VEC3));
-    collection.addPropertiesObject(PropertiesObject("Color", &m_color, PropertiesObject::VEC3));
 }

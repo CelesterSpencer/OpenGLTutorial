@@ -27,9 +27,6 @@ namespace cgf {
         virtual void init(GLuint shaderProgramLocation) override;
         virtual void update() override;
 
-        // inherited from Parameterizable
-        virtual PropertiesCollection* getPropertiesCollection() override;
-
     private:
         std::string m_name;
         glm::vec3 m_color;

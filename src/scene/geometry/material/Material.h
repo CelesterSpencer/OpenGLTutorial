@@ -7,10 +7,13 @@
 
 
 #include <GL/gl3w.h>
+#include "io/Parameterizable.h"
 
 
 namespace cgf {
-    class Material {
+    class Material : public Parameterizable {
+    public:
+        Material(std::string name) : Parameterizable(name) { }
         virtual void init(GLuint shaderProgramLocation) =0;
         virtual void update() =0;
     };

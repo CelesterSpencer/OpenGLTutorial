@@ -19,10 +19,19 @@ namespace cgf {
         glm::vec3 getPosition() { return m_position; };
         glm::vec3 getTarget() { return m_target; };
         glm::vec3 getUp() { return m_up; };
-        void setWindowSize(int windowWidth, int windowHeight) {
+        void setProjection(int windowWidth, int windowHeight, float angle, float zNear, float zFar) {
             m_windowWidth = windowWidth;
             m_windowHeight = windowHeight;
+            m_angle = angle;
+            m_near = zNear;
+            m_far = zFar;
         }
+
+        int getImageplaneWidth() { return m_windowWidth; };
+        int getImageplaneHeight() { return m_windowHeight; };
+        float getCameraangle() { return m_angle; };
+        float getNear() { return m_near; };
+        float getFar() { return m_far; };
 
         virtual void update() =0;
 
@@ -39,6 +48,9 @@ namespace cgf {
 
         int m_windowWidth;
         int m_windowHeight;
+        float m_angle;
+        float m_near;
+        float m_far;
     };
 }
 

@@ -4,11 +4,16 @@
 
 #include "BasicMaterial.h"
 
-cgf::BasicMaterial::BasicMaterial(float ambientIntensity, float diffuseIntensity, float specularIntensity, float specularPower) {
+cgf::BasicMaterial::BasicMaterial(float ambientIntensity, float diffuseIntensity, float specularIntensity, float specularPower) : Material("Basicmaterial") {
     m_ambientIntensity = ambientIntensity;
     m_diffuseIntensity = diffuseIntensity;
     m_specularIntensity = specularIntensity;
     m_specularPower = specularPower;
+
+    Parameterizable::addProperty(PropertiesObject("Ambient", &m_ambientIntensity, PropertiesObject::FLOAT));
+    Parameterizable::addProperty(PropertiesObject("Diffuse", &m_diffuseIntensity, PropertiesObject::FLOAT));
+    Parameterizable::addProperty(PropertiesObject("Specular", &m_specularIntensity, PropertiesObject::FLOAT));
+    Parameterizable::addProperty(PropertiesObject("Power", &m_specularPower, PropertiesObject::FLOAT));
 }
 
 void cgf::BasicMaterial::init(GLuint shaderProgramLocation) {

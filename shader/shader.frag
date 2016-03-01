@@ -16,7 +16,7 @@ struct BasicMaterial {
     float specularPower;
 };
 
-uniform sampler2D gSampler;
+//uniform sampler2D gSampler;
 uniform PointLight gPointLight;
 uniform BasicMaterial gBasicMaterial;
 uniform vec3 gEye;
@@ -52,19 +52,20 @@ vec4 calcPointLight(vec3 normal) {
 
     vec3 invEyeDir = normalize(gEye - worldPos0);
     float rimFactor = dot(invEyeDir, normal);
-    rimFactor = rimFactor * 1.5f;
+    rimFactor = rimFactor * 2f;
     rimFactor = 1 - rimFactor;
     vec4 rimColor = vec4(1,1,1,1) * rimFactor;
 
     // hard code attenuation of the light
-    float attenuation = 0 + 0.1 * distance + 0.3 * distance * distance;
+    float attenuation = 0 + 0.1 * distance + 0.1 * distance * distance;
 
     return (color / attenuation) + clamp(rimColor, 0.0f, 1.0f);
 }
 
 void main() {
-    vec4 lightColor = calcPointLight(normal0);
+    vec3 normal = normalize(normal0);
+    vec4 lightColor = calcPointLight(normal);
     //vec4 textureColor = texture2D(gSampler, texCoord0.xy);
-    vec4 textureColor = vec4(0,0,1,0.5);
+    vec4 textureColor = vec4(1,1,1,0.5);
     fragColor = textureColor * lightColor;
 }

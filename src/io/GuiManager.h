@@ -6,6 +6,7 @@
 #define SRCCMAKE_GUIMANAGER_H
 
 
+#include <iostream>
 #include <vector>
 #include <imgui.h>
 #include <glm.hpp>
@@ -35,7 +36,7 @@ namespace cgf {
         bool onMouseButton(int button, int action) override;
 
     private:
-        std::vector<cgf::PropertiesCollection *> *mp_propertiesCollections;
+        std::vector<cgf::PropertiesCollection *> m_propertiesCollections;
 
     };
 }
